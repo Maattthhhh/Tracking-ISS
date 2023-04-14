@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <link rel="icon" type="image/jpg" sizes="16x16" href="images/internationalspacestation.jpg">
+    <!--<script defer src="https://pyscript.net/latest/pyscript.js"></script>-->
+    <title>Where is the ISS?</title>
+</head>
+<body style="background-color:skyblue;">
+<style>
+    #bach:hover{
+        animation-name: bosch;
+        animation-duration: 3s;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        filter: brightness(100%);
+    }
+    @keyframes bosch{
+        0%{
+            transform: rotate(0deg);
+        }
+        100%{
+            transform: rotate(360deg);
+        }
+    }
+    #bach{
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: #fff 4px 4px 0 0,#000 4px 4px 0 1px;
+    }
+    h1 {text-align: center;}
+    p {text-align: center;}
+</style>
+    <br>
+    <!--<marquee direction="right">-->
+    <a href="Pokemon.html"><img src="images/internationalspacestation.jpg" style="width:200px; height: 200px" id="bach"></a>
+    <!--</marquee>-->
+    <h1>Where is the ISS?</h1>
+    <p>
+        Latitude: <span id="lat"></span><br />
+        Longitude: <span id="lon"></span><br />
+        Location: <span id="loc"></span><br />
+        Weather: <span id="cli"></span>
+    </p>
+    <script>
+        const api_url = 'https://api.wheretheiss.at/v1/satellites/25544';
+        async function getISS(){
+            const response = await fetch(api_url);
+            const data = await response.json();
+            const { latitude, longitude } = data;
+            console.log(latitude);
+            console.log(longitude);
+
+            document.getElementById('lat').textContent = latitude;
+            document.getElementById('lon').textContent = longitude;
+            const geoapiurl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+            fetch(geoapiurl)
+            .then(res => res.json())
+            .then(data => {
+                console.log(data)
+                if(typeof data.locality === 'undefined') {
+                    document.getElementById('loc').textContent = data.countryName;}
+                else if(typeof data.countryName === 'undefined') {
+                    document.getElementById('loc').textContent = data.locality;
+                    city = data.locality;
+                    async function getCondition(city) {
+                        const url = `http://wttr.in/${city}?format=%t`;
+                        const response = await fetch(url);
+                        const raw = await response.text();
+                        const condition = raw.trim();
+                        return condition;
+                        }
+                    getCondition(city).then(condition => {
+                    document.getElementById('cli').textContent = `The current temperature in ${city} is ${condition}.`;})
+                }
+                else if(typeof data.locality === 'undefined' && typeof data.countryName === 'undefined'){
+                    document.getElementById('loc').textContent = 'Undefined';
+                }    
+                else{
+                    document.getElementById('loc').textContent = data.locality + ", " + data.countryName;
+                    city = data.locality;
+                    async function getCondition(city) {
+                        const url = `http://wttr.in/${city}?format=%t`;
+                        const response = await fetch(url);
+                        const raw = await response.text();
+                        const condition = raw.trim();
+                        return condition;
+                        }
+                    getCondition(city).then(condition => {
+                    document.getElementById('cli').textContent = `The current temperature in ${city} is ${condition}.`;})
+                }
+                if (!city) {
+                    document.getElementById('cli').textContent = "No city found";
+                }
+                }
+            )
+        }
+        getISS();
+    </script>
+    <!--<py-script>
+    </py-script>-->
+</body>
+</html>
