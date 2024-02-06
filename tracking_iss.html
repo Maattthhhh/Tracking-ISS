@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <link rel="icon" type="image/jpg" sizes="16x16" href="images/internationalspacestation.jpg">
+    <title>Where is the ISS?</title>
+</head>
+<body style="background-color:skyblue;">
+<style>
+    #bach:hover{
+        animation-name: bosch;
+        animation-duration: 3s;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        filter: brightness(100%);
+    }
+    @keyframes bosch{
+        0%{
+            transform: rotate(0deg);
+        }
+        100%{
+            transform: rotate(360deg);
+        }
+    }
+    #bach{
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: #fff 4px 4px 0 0,#000 4px 4px 0 1px;
+    }
+    h1 {text-align: center;}
+    p {text-align: center;}
+</style>
+    <a href="https://maattthhhh.github.io/Pokemon/Pokemon.html"><img src="internationalspacestation.jpg" style="width:200px; height: 200px" id="bach"></a>
+    <h1>Where is the ISS?</h1>
+    <p>
+        Latitude: <span id="lat"></span><br />
+        Longitude: <span id="lon"></span><br />
+        Location: <span id="loc"></span>
+    </p>
+    <script>
+        const api_url = 'https://api.wheretheiss.at/v1/satellites/25544';
+        async function getISS() {
+            try {
+                const response = await fetch(api_url);
+                const data = await response.json();
+                const { latitude, longitude } = data;
+                console.log(latitude);
+                console.log(longitude);
+    
+                document.getElementById('lat').textContent = latitude;
+                document.getElementById('lon').textContent = longitude;
+    
+                const geoapiurl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
+                const geoResponse = await fetch(geoapiurl);
+                const geoData = await geoResponse.json();
+    
+                if (typeof geoData.locality === 'undefined') {
+                    document.getElementById('loc').textContent = geoData.countryName;
+                } else if (typeof geoData.countryName === 'undefined') {
+                    document.getElementById('loc').textContent = geoData.locality;
+                    const city = geoData.locality;
+                    const condition = await getCondition(city);
+                    document.getElementById('cli').textContent = `The current temperature in ${city} is ${condition}.`;
+                } else if (typeof geoData.locality === 'undefined' && typeof geoData.countryName === 'undefined') {
+                    document.getElementById('loc').textContent = 'Undefined';
+                } else {
+                    document.getElementById('loc').textContent = geoData.locality + ", " + geoData.countryName;
+                    const city = geoData.locality;
+                    const condition = await getCondition(city);
+                    document.getElementById('cli').textContent = `The current temperature in ${city} is ${condition}.`;
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('cli').textContent = 'Location temperature unavailable';
+            }
+        }
+    
+        async function getCondition(city) {
+            const url = `https://wttr.in/${city}?format=%t`;
+            const response = await fetch(url);
+            if (response.ok) {
+                const raw = await response.text();
+                const condition = raw.trim();
+                return condition;
+            } else {
+                return undefined;
+            }
+        }
+    
+        getISS();
+    </script>        
+</body>
+</html>
