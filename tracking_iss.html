@@ -76,13 +76,9 @@
 		async function getCondition(city) {
 			const url = `https://wttr.in/${city}?format=%t`;
 			const response = await fetch(url);
-			if (response.ok) {
-				const raw = await response.text();
-				const condition = raw.trim();
-				return condition;
-			} else {
-				return undefined;
-			}
+		    const raw = await response.text();
+			const condition = raw.trim();
+			return condition;
 		}}
 		getISS();
 	</script>        
