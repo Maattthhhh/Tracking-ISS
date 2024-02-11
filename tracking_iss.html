@@ -5,17 +5,33 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
-    <link rel="icon" type="image/jpg" sizes="16x16" href="images/internationalspacestation.jpg">
+    <link rel="icon" type="image/jpg" sizes="16x16" href="internationalspacestation.jpg">
     <title>Where is the ISS?</title>
 </head>
 <body style="background-color:skyblue;">
 <style>
+    @import url('https://fonts.cdnfonts.com/css/yas');
+    body {
+        font-family: 'Yas', sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 20px;
+        background-color: skyblue;
+        text-align: center;
+        }
     #bach:hover{
         animation-name: bosch;
         animation-duration: 3s;
         animation-timing-function: linear;
         animation-iteration-count: infinite;
         filter: brightness(100%);
+    }
+    #bach{
+        display: block;
+        margin: 0 auto 20px;
+        width: 200px;
+        height: 200px;
+        box-shadow: #fff 4px 4px 0 0, #000 4px 4px 0 1px;
     }
     @keyframes bosch{
         0%{
@@ -25,21 +41,16 @@
             transform: rotate(360deg);
         }
     }
-    #bach{
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        box-shadow: #fff 4px 4px 0 0,#000 4px 4px 0 1px;
-    }
-    h1 {text-align: center;}
-    p {text-align: center;}
+    h1 {margin-bottom: 30px;}
+    p {margin-bottom: 20px;}
 </style>
+    <br>
     <a href="https://maattthhhh.github.io/Pokemon/Pokemon.html"><img src="internationalspacestation.jpg" style="width:200px; height: 200px" id="bach"></a>
     <h1>Where is the ISS?</h1>
     <p>
-        Latitude: <span id="lat"></span><br />
-        Longitude: <span id="lon"></span><br />
-        Location: <span id="loc"></span>
+        Latitude:  <span id="lat"></span><br />
+        Longitude:  <span id="lon"></span><br />
+        Location:  <span id="loc"></span><br />
         <span id="cli"></span>
     </p>
     <script>
@@ -60,25 +71,28 @@
             if (geoData.locality && geoData.locality.includes("GMT")) {
 				if (geoData.continent){
 					document.getElementById('loc').textContent = "The International Space Station is currently near " + geoData.continent + ".";
-					document.getElementById('cli').textContent = "Location temperature unavailable";}
+                }
 				else {
 					document.getElementById('loc').textContent = "The International Space Station is currently near the " + geoData.localityInfo.informative[0].name + ".";
 				}
 			} else if (!geoData.locality) {
 				document.getElementById('loc').textContent = "The International Space Station is currently near " + geoData.countryName + ".";
-				document.getElementById('cli').textContent = "Location temperature unavailable";
-			}else {
+			} else {
 				document.getElementById('loc').textContent = "The International Space Station is currently near " + geoData.locality + ", " + geoData.countryName;
 				const city = geoData.locality;
-				const condition = await getCondition(city);
-				document.getElementById('cli').textContent = `The current temperature in ${city} is ${condition}.`;
+				const { description, temperature } = await getCondition(city);
+				document.getElementById('cli').textContent = `Weather condition: ${city} is ${temperature} ${description}`;
 			}
 		async function getCondition(city) {
-			const url = `https://wttr.in/${city}?format=%t`;
-			const response = await fetch(url);
-		    const raw = await response.text();
-			const condition = raw.trim();
-			return condition;
+			const urlC = `https://wttr.in/${city}?format=%c`;
+            const urlT = `https://wttr.in/${city}?format=%t`;
+			const responseC = await fetch(urlC);
+            const responseT = await fetch(urlT);
+		    const rawC = await responseC.text();
+            const rawT = await responseT.text();
+			const conditionC = rawC.trim();
+            const conditionT = rawT.trim();
+			return { description: conditionC, temperature: conditionT };
 		}}
 		getISS();
 	</script>        
