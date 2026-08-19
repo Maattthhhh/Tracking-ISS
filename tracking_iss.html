@@ -56,7 +56,12 @@
     <script>
         const api_url = 'https://api.wheretheiss.at/v1/satellites/25544';
         async function getISS() {
-            const response = await fetch(api_url);
+            const response = await fetch(api_url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/plain'
+                }
+            });
             const data = await response.json();
             const { latitude, longitude } = data;
             console.log(latitude);
@@ -66,7 +71,12 @@
             document.getElementById('lon').textContent = longitude;
 
             const geoapiurl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
-            const geoResponse = await fetch(geoapiurl);
+            const geoResponse = await fetch(geoapiurl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/plain'
+                }
+            });
             const geoData = await geoResponse.json();
             if (geoData.locality && geoData.locality.includes("GMT")) {
 				if (geoData.continent){
@@ -83,18 +93,29 @@
 				const { description, temperature } = await getCondition(city);
 				document.getElementById('cli').textContent = `Weather condition: ${city} is ${temperature} ${description}`;
 			}
+        }
+		getISS();
 		async function getCondition(city) {
 			const urlC = `https://wttr.in/${city}?format=%c`;
             const urlT = `https://wttr.in/${city}?format=%t`;
-			const responseC = await fetch(urlC);
-            const responseT = await fetch(urlT);
+			const responseC = await fetch(urlC, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/plain'
+                }
+            });
+            const responseT = await fetch(urlT, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/plain'
+                }
+            });
 		    const rawC = await responseC.text();
             const rawT = await responseT.text();
 			const conditionC = rawC.trim();
             const conditionT = rawT.trim();
 			return { description: conditionC, temperature: conditionT };
-		}}
-		getISS();
+		}
 	</script>        
 </body>
 </html>
