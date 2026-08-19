@@ -93,29 +93,21 @@
 				const { description, temperature } = await getCondition(city);
 				document.getElementById('cli').textContent = `Weather condition: ${city} is ${temperature} ${description}`;
 			}
+		async function getCondition(city) {
+            const urlc =`https://wttr.in/${encodeURIComponent(city)}?format=j1`;
+
+            const response = await fetch(urlc);
+            const data = await response.json();
+
+            const current = data.current_condition[0];
+
+            return {
+                description: current.weatherDesc[0].value,
+                temperature: current.temp_C + "℃"
+            };
+            }
         }
 		getISS();
-		async function getCondition(city) {
-			const urlC = `https://wttr.in/${city}?format=%c`;
-            const urlT = `https://wttr.in/${city}?format=%t`;
-			const responseC = await fetch(urlC, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'text/plain'
-                }
-            });
-            const responseT = await fetch(urlT, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'text/plain'
-                }
-            });
-		    const rawC = await responseC.text();
-            const rawT = await responseT.text();
-			const conditionC = rawC.trim();
-            const conditionT = rawT.trim();
-			return { description: conditionC, temperature: conditionT };
-		}
 	</script>        
 </body>
 </html>
