@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
     <link rel="icon" type="image/jpg" sizes="16x16" href="internationalspacestation.jpg">
     <title>Where is the ISS?</title>
 </head>
-<body style="background-color:skyblue;">
+<body style="background-color:skyblue;" id="bigbang">
 <style>
     @import url('https://fonts.cdnfonts.com/css/yas');
     body {
@@ -16,9 +15,10 @@
         line-height: 1.6;
         margin: 0;
         padding: 20px;
-        background-color: skyblue;
         text-align: center;
-        }
+        min-height: 100vh;
+        box-sizing: border-box;
+    }
     #bach:hover{
         animation-name: bosch;
         animation-duration: 3s;
@@ -41,73 +41,181 @@
             transform: rotate(360deg);
         }
     }
-    h1 {margin-bottom: 30px;}
-    p {margin-bottom: 20px;}
+    .hud-container {
+        background: rgba(0, 5, 10, 0.85); /* Deep space-black tint */
+        border: 2px solid #00F0FF;        /* Electric Cyan outline */
+        border-left: 12px solid #00F0FF;   /* Thick accent stripe on the left */
+        border-radius: 4px;                /* Sharp aerospace edges */
+        padding: 30px;
+        max-width: 600px;
+        margin: 40px auto;
+        position: relative;
+        box-shadow: 0 0 25px rgba(0, 240, 255, 0.15); /* Soft outer glow */
+        
+        /* This creates the cool diagonal notch clip in the bottom-right corner */
+        clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+    }
+
+    /* Decorative HUD Version Tag in top right corner */
+    .hud-container::before {
+        content: "v001.iss-tracking";
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        font-family: monospace;
+        font-size: 0.65rem;
+        color: rgba(0, 240, 255, 0.4);
+        letter-spacing: 1px;
+    }
+    h1 {
+        color: #00F0FF; /* Matches the HUD header style */
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-family: 'Segoe UI', Roboto, sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid rgba(0, 240, 255, 0.3); /* Subtle separator line */
+        padding-bottom: 12px;
+    }
+
+    p {
+        margin-bottom: 20px;
+    }
+    #issinfo {
+        font-family: monospace;
+        font-size: 0.75rem;
+        line-height: 1;
+        color: #FFB800; /* Cyber Amber telemetry text */
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+        background: rgba(0, 0, 0, 0.4);
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 184, 0, 0.2);
+    }
+    .image-credits {
+        margin-top: 80px; /* Adjust this value to push it down as much as you want */
+        font-size: 0.85rem; /* Makes the text slightly smaller/subtle */
+        color: #f8f7f7; /* Soft gray so it doesn't distract from your main text */
+        text-shadow:
+            0 1px 3px rgba(0, 0, 0, 0.9),
+            0 0 15px rgba(0, 0, 0, 0.6);
+    }
+    .image-credits a {
+        color: #00F0FF; /* Electric Cyan (or use your chosen text color) */
+        text-decoration: none;
+        font-weight: bold;
+        border-bottom: 1px dashed rgba(0, 240, 255, 0.4);
+        transition: all 0.2s ease;
+    }
+
+    .image-credits a:hover {
+        color: #FFB800; /* Turns Cyber Amber on hover */
+        border-bottom: 1px solid #FFB800;
+    }
 </style>
     <br>
     <a href="https://maattthhhh.github.io/Pokemon/Pokemon.html"><img src="internationalspacestation.jpg" style="width:200px; height: 200px" id="bach"></a>
+    <div class="hud-container">
     <h1>Where is the ISS?</h1>
-    <p>
+    <div id = "issinfo">
         Latitude: <span id="lat"></span><br />
         Longitude: <span id="lon"></span><br />
         Location: <span id="loc"></span><br />
         <span id="cli"></span>
-    </p>
+    </div>
+    <footer class="image-credits">
+        Image source: <a href="https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi" target="_blank" rel="noopener noreferrer">NASA GIBS</a>
+    </footer>
+    </div>
     <script>
         const api_url = 'https://api.wheretheiss.at/v1/satellites/25544';
+
         async function getISS() {
-            const response = await fetch(api_url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'text/plain'
+            try {
+                const response = await fetch(api_url, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+                const { latitude, longitude } = data;
+                
+                document.getElementById('lat').textContent = latitude;
+                document.getElementById('lon').textContent = longitude;
+
+                // Call NASA imagery immediately using current coordinates
+                nasa(latitude, longitude);
+
+                const geoapiurl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
+                const geoResponse = await fetch(geoapiurl, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const geoData = await geoResponse.json();
+
+                if (geoData.locality && geoData.locality.includes("GMT")) {
+                    if (geoData.continent){
+                        document.getElementById('loc').textContent = "The International Space Station is currently near " + geoData.continent + ".";
+                    } else {
+                        document.getElementById('loc').textContent = "The International Space Station is currently near the " + geoData.localityInfo.informative[0].name + ".";
+                    }
+                } else if (!geoData.locality) {
+                    document.getElementById('loc').textContent = "The International Space Station is currently near " + geoData.countryName + ".";
+                } else {
+                    document.getElementById('loc').textContent = "The International Space Station is currently near " + geoData.locality + ", " + geoData.countryName;
+                    const city = geoData.locality;
+                    const { description, temperature } = await getCondition(city);
+                    document.getElementById('cli').textContent = `Weather condition: ${city} is ${temperature} ${description}`;
                 }
-            });
-            const data = await response.json();
-            const { latitude, longitude } = data;
-            console.log(latitude);
-            console.log(longitude);
-
-            document.getElementById('lat').textContent = latitude;
-            document.getElementById('lon').textContent = longitude;
-
-            const geoapiurl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
-            const geoResponse = await fetch(geoapiurl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'text/plain'
-                }
-            });
-            const geoData = await geoResponse.json();
-            if (geoData.locality && geoData.locality.includes("GMT")) {
-				if (geoData.continent){
-					document.getElementById('loc').textContent = "The International Space Station is currently near " + geoData.continent + ".";
-                }
-				else {
-					document.getElementById('loc').textContent = "The International Space Station is currently near the " + geoData.localityInfo.informative[0].name + ".";
-				}
-			} else if (!geoData.locality) {
-				document.getElementById('loc').textContent = "The International Space Station is currently near " + geoData.countryName + ".";
-			} else {
-				document.getElementById('loc').textContent = "The International Space Station is currently near " + geoData.locality + ", " + geoData.countryName;
-				const city = geoData.locality;
-				const { description, temperature } = await getCondition(city);
-				document.getElementById('cli').textContent = `Weather condition: ${city} is ${temperature} ${description}`;
-			}
-		async function getCondition(city) {
-            const urlc =`https://wttr.in/${encodeURIComponent(city)}?format=j1`;
-
-            const response = await fetch(urlc);
-            const data = await response.json();
-
-            const current = data.current_condition[0];
-
-            return {
-                description: current.weatherDesc[0].value,
-                temperature: current.temp_C + "℃"
-            };
+            } catch (error) {
+                console.error("Error fetching ISS location data:", error);
             }
         }
-		getISS();
-	</script>        
+        async function nasa(latitude, longitude) {
+            const nasaurl = "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi";
+            const imageDate = new Date();
+            imageDate.setUTCDate(imageDate.getUTCDate() - 2);
+            const date = imageDate.toISOString().slice(0, 10);
+            const latSize = 1.0;
+            const aspectRatio = 2.25;
+            const lonSize = latSize * aspectRatio / Math.cos(latitude * Math.PI / 180);
+
+            const params = new URLSearchParams({
+                SERVICE: "WMS",
+                VERSION: "1.1.1",
+                REQUEST: "GetMap",
+                LAYERS: "MODIS_Terra_CorrectedReflectance_TrueColor",
+                STYLES: "",
+                SRS: "EPSG:4326",
+                BBOX: `${longitude-lonSize},${latitude-latSize},${longitude+lonSize},${latitude+latSize}`,
+                WIDTH: 2304,
+                HEIGHT: 1024,
+                FORMAT: "image/jpeg",
+                TIME: date
+            });
+            const imageURL = `${nasaurl}?${params.toString()}`;
+            document.getElementById("bigbang").style.backgroundImage =
+                `url("${imageURL}")`;
+            document.getElementById("bigbang").style.backgroundSize = "cover";
+            document.getElementById("bigbang").style.backgroundPosition = "center";
+            document.getElementById("bigbang").style.backgroundRepeat = "no-repeat";
+            console.log("NASA GIBS Image URL:", imageURL);
+        }
+        async function getCondition(city) {
+            try {
+                const urlc = `https://wttr.in/${encodeURIComponent(city)}?format=j1`;
+                const response = await fetch(urlc);
+                const data = await response.json();
+                const current = data.current_condition[0];
+
+                return {
+                    description: current.weatherDesc[0].value,
+                    temperature: current.temp_C + "°C"
+                };
+            } catch (err) {
+                return { description: "unknown", temperature: "N/A" };
+            }
+        }
+        getISS();
+    </script>        
 </body>
 </html>
